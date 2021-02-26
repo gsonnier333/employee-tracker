@@ -115,7 +115,7 @@ function addEmployee(){
       let roleId = -1; //meaning it's an invalid role
       for(let i=0; i<roleList.length; i++){
         if(roleList[i] === ans.role){
-          roleId = i;
+          roleId = i + 1;
           break;
         }
       }
