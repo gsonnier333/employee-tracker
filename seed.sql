@@ -1,3 +1,9 @@
+USE manage_db;
+
+DELETE FROM departments;
+DELETE FROM roles;
+DELETE FROM employees;
+
 INSERT INTO departments (name) VALUE ("Customer Service");
 INSERT INTO departments (name) VALUE ("Marketing");
 
