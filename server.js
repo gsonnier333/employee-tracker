@@ -26,6 +26,8 @@ function displayEmployees() {
 	connection.query("SELECT * FROM employees", (err, res) => {
 		if (err) throw err;
 		console.table(res);
+		console.log("Returning to root menu...");
+		rootQuestion();
 	});
 }
 
@@ -33,6 +35,8 @@ function displayRoles() {
 	connection.query("SELECT * FROM roles", (err, res) => {
 		if (err) throw err;
 		console.table(res);
+		console.log("Returning to root menu...");
+		rootQuestion();
 	});
 }
 
@@ -40,6 +44,8 @@ function displayDepartments() {
 	connection.query("SELECT * FROM departments", (err, res) => {
 		if (err) throw err;
 		console.table(res);
+		console.log("Returning to root menu...");
+		rootQuestion();
 	});
 }
 
