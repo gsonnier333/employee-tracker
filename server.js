@@ -89,7 +89,7 @@ function add() {
 		} else if (ans.selection === "New Role") {
 			addRole();
 		} else {
-			//call addDepartment function
+			addDepartment();
 		}
 	});
 }
@@ -178,8 +178,8 @@ function addRole() {
 		inquirer.prompt(questions).then((ans) => {
 			let newQuery =
 				"INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?)";
-			let depId = -1; //default to an invalid id
-			console.log(res);
+			let depId = -1; //default to an invalid id in case something goes wrong
+			//console.log(res);
 			for (let i = 0; i < res.length; i++) {
 				//find the department's id
 				let dep = res[i];
@@ -199,38 +199,21 @@ function addRole() {
 	});
 }
 
-// function addDepartment(){
-//   connection.query("SELECT * FROM departments", (err, res) => {
-//     if(err) throw err;
-//     //console.log(res);
+function addDepartment() {
+	let questions = [
+		{
+			name: "name",
+			message: "New department's name:",
+		},
+	];
 
-//     //Note: res contains objects with an id and name for each department
-//     let depList = [];
-//     res.forEach(dep => {
-//       depList.push(dep.name);
-//     });
-
-//     let questions = [
-//       {
-//         name: "title",
-//         message: "New role's title:"
-//       },
-//       {
-//         name: "salary",
-//         message: "New role's salary:"
-//       },
-//       {
-//         name: "department",
-//         message: "New role's department:",
-//         type: "list",
-//         choices: depList
-//       }
-//     ];
-
-//     inquirer.prompt(questions).then(ans => {
-//       let newQuery = "INSERT TO roles (title, salary, department_id) VALUES (?, ?, ?)";
-//     })
-//   });
-// }
+	inquirer.prompt(questions).then((ans) => {
+		let newQuery = "INSERT INTO departments (name) VALUE (?)";
+		connection.query(newQuery, [ans.name], (err, res) => {
+			console.log(`${ans.name} added to departments.`);
+			displayDepartments();
+		});
+	});
+}
 
 connect();
