@@ -75,54 +75,79 @@ function add() {
 }
 
 function addEmployee() {
-	connection.query("SELECT * FROM roles", (err, res) => {
+	connection.query("SELECT * FROM roles", (err, roleRes) => {
 		if (err) throw err;
 		//console.log(res);
 		let roleList = [];
-		res.forEach((role) => {
+		roleRes.forEach((role) => {
 			roleList.push(role.title);
 		});
+		connection.query("SELECT * FROM employees", (err, res) => {
+			if (err) throw err;
+			//console.log(res);
+			let empList = [];
+			empList.push("N/A"); //start with an N/A option for manager
+			res.forEach((emp) => {
+				empList.push(emp.first_name + " " + emp.last_name); //add other employees as manager options
+			});
 
-		let questions = [
-			{
-				name: "first",
-				message: "New employee's first name:",
-			},
-			{
-				name: "last",
-				message: "New employee's last name:",
-			},
-			{
-				name: "role",
-				message: "New employee's role:",
-				type: "list",
-				choices: roleList,
-			},
-			{
-				name: "manager",
-				message: "New employee's manager:",
-				type: "list",
-				choices: ["N/A"],
-			},
-		];
+			let questions = [
+				{
+					name: "first",
+					message: "New employee's first name:",
+				},
+				{
+					name: "last",
+					message: "New employee's last name:",
+				},
+				{
+					name: "role",
+					message: "New employee's role:",
+					type: "list",
+					choices: roleList,
+				},
+				{
+					name: "manager",
+					message: "New employee's manager:",
+					type: "list",
+					choices: empList,
+				},
+			];
 
-		inquirer.prompt(questions).then((ans) => {
-			let roleId = -1; //meaning it's an invalid role
-			for (let i = 0; i < res.length; i++) {
-				if (res[i].title === ans.role) {
-					roleId = res[i].id;
-					break;
+			inquirer.prompt(questions).then((ans) => {
+				let roleId = -1; //meaning it's an invalid role
+				for (let i = 0; i < roleRes.length; i++) {
+					if (roleRes[i].title === ans.role) {
+						roleId = roleRes[i].id;
+						break;
+					}
 				}
-			}
 
-			connection.query(
-				"INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)",
-				[ans.first, ans.last, roleId, null],
-				(err, res) => {
-					console.log(`${ans.first} ${ans.last} added to employees.`);
-					displayEmployees();
+				let managerId = null; //find the id of the manager, null by default
+				if (ans.manager !== "N/A") {
+					//if a manager was selected
+					for (let i = 0; i < res.length; i++) {
+						let manager = res[i];
+						if (
+							manager.first_name + " " + manager.last_name ===
+							ans.manager
+						) {
+							managerId = manager.id;
+						}
+					}
 				}
-			);
+
+				connection.query(
+					"INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)",
+					[ans.first, ans.last, roleId, managerId],
+					(err, res) => {
+						console.log(
+							`${ans.first} ${ans.last} added to employees.`
+						);
+						displayEmployees();
+					}
+				);
+			});
 		});
 	});
 }
@@ -302,7 +327,7 @@ function updateEmployeeRole() {
 			res.forEach((emp) => {
 				empList.push(emp.first_name + " " + emp.last_name);
 			});
-			console.log(empList);
+
 			let questions = [
 				{
 					name: "employee",
