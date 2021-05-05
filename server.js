@@ -22,33 +22,6 @@ function connect() {
 	});
 }
 
-function displayEmployees() {
-	connection.query("SELECT * FROM employees", (err, res) => {
-		if (err) throw err;
-		console.table(res);
-		console.log("Returning to root menu...");
-		rootQuestion();
-	});
-}
-
-function displayRoles() {
-	connection.query("SELECT * FROM roles", (err, res) => {
-		if (err) throw err;
-		console.table(res);
-		console.log("Returning to root menu...");
-		rootQuestion();
-	});
-}
-
-function displayDepartments() {
-	connection.query("SELECT * FROM departments", (err, res) => {
-		if (err) throw err;
-		console.table(res);
-		console.log("Returning to root menu...");
-		rootQuestion();
-	});
-}
-
 //asks if the user wants to add/view/update. Should be the first question asked
 function rootQuestion() {
 	let question = [
@@ -56,7 +29,7 @@ function rootQuestion() {
 			name: "action",
 			type: "list",
 			message: "What would you like to do?",
-			choices: ["Add", "View", "Update"],
+			choices: ["Add", "View", "Update", "End"],
 		},
 	];
 
@@ -64,11 +37,12 @@ function rootQuestion() {
 		if (ans.action === "Add") {
 			add();
 		} else if (ans.action === "View") {
-			//call function to view stuff
-			console.log("View chosen");
+			view();
+		} else if (ans.action === "Update") {
+			update();
 		} else {
-			//call function to update stuff
-			console.log("Update chosen");
+			console.log("Closing...");
+			connection.end();
 		}
 	});
 }
@@ -134,9 +108,9 @@ function addEmployee() {
 
 		inquirer.prompt(questions).then((ans) => {
 			let roleId = -1; //meaning it's an invalid role
-			for (let i = 0; i < roleList.length; i++) {
-				if (roleList[i] === ans.role) {
-					roleId = i + 1;
+			for (let i = 0; i < res.length; i++) {
+				if (res[i].title === ans.role) {
+					roleId = res[i].id;
 					break;
 				}
 			}
@@ -218,6 +192,158 @@ function addDepartment() {
 		connection.query(newQuery, [ans.name], (err, res) => {
 			console.log(`${ans.name} added to departments.`);
 			displayDepartments();
+		});
+	});
+}
+
+/**
+ *
+ * End functions for adding to the database
+ *
+ */
+
+/**
+ *
+ * Functions for viewing the database
+ *
+ */
+
+function view() {
+	let question = [
+		{
+			name: "selection",
+			type: "list",
+			message: "What would you like to view?",
+			choices: ["Employees", "Roles", "Departments"],
+		},
+	];
+
+	inquirer.prompt(question).then((ans) => {
+		if (ans.selection === "Employees") {
+			displayEmployees();
+		} else if (ans.selection === "Roles") {
+			displayRoles();
+		} else {
+			displayDepartments();
+		}
+	});
+}
+
+function displayEmployees() {
+	connection.query("SELECT * FROM employees", (err, res) => {
+		if (err) throw err;
+		console.table(res);
+		console.log("Returning to root menu...");
+		rootQuestion();
+	});
+}
+
+function displayRoles() {
+	connection.query("SELECT * FROM roles", (err, res) => {
+		if (err) throw err;
+		console.table(res);
+		console.log("Returning to root menu...");
+		rootQuestion();
+	});
+}
+
+function displayDepartments() {
+	connection.query("SELECT * FROM departments", (err, res) => {
+		if (err) throw err;
+		console.table(res);
+		console.log("Returning to root menu...");
+		rootQuestion();
+	});
+}
+
+/**
+ *
+ * End functions for viewing the database
+ *
+ */
+
+/**
+ *
+ * Functions for updating the database
+ *
+ */
+
+function update() {
+	let question = [
+		{
+			name: "selection",
+			type: "list",
+			message: "What would you like to update?",
+			choices: ["Employee role"], //can be expanded in the future if desired
+		},
+	];
+
+	inquirer.prompt(question).then((ans) => {
+		if (ans.selection === "Employee role") {
+			updateEmployeeRole();
+		}
+	});
+}
+
+function updateEmployeeRole() {
+	connection.query("SELECT * FROM roles", (err, roleRes) => {
+		if (err) throw err;
+		//console.log(res);
+		let roleList = [];
+		roleRes.forEach((role) => {
+			roleList.push(role.title);
+		});
+		connection.query("SELECT * FROM employees", (err, res) => {
+			if (err) throw err;
+			//console.log(res);
+
+			//Note: res contains objects with an id and name for each department
+			let empList = [];
+			res.forEach((emp) => {
+				empList.push(emp.first_name + " " + emp.last_name);
+			});
+			console.log(empList);
+			let questions = [
+				{
+					name: "employee",
+					message: "Which employee's role would you like to update?",
+					type: "list",
+					choices: empList,
+				},
+				{
+					name: "role",
+					message: "Which role should be assigned to this employee?",
+					type: "list",
+					choices: roleList,
+				},
+			];
+
+			inquirer.prompt(questions).then((ans) => {
+				let empId = -1; //default to an invalid id in case something goes wrong
+				//console.log(res);
+				for (let i = 0; i < res.length; i++) {
+					let emp = res[i];
+					if (emp.first_name + " " + emp.last_name === ans.employee) {
+						empId = emp.id;
+					}
+				}
+				let roleId = -1; //meaning it's an invalid role
+				for (let i = 0; i < roleRes.length; i++) {
+					if (roleRes[i].title === ans.role) {
+						roleId = roleRes[i].id;
+						break;
+					}
+				}
+				connection.query(
+					`UPDATE employees SET role_id=${roleId} WHERE id=${empId}`,
+					(err, res) => {
+						console.log(
+							`${ans.employee}'s role set to ${ans.role} (role id ${roleId}).`
+						);
+						displayEmployees();
+					}
+				);
+			});
 		});
 	});
 }
